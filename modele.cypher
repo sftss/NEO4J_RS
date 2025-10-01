@@ -1,26 +1,13 @@
 /* Contraintes/Index */
 
 // id
-CREATE CONSTRAINT user_id IF NOT EXISTS
-FOR (u:User) REQUIRE u.id IS UNIQUE;
-
-CREATE CONSTRAINT post_id IF NOT EXISTS
-FOR (p:Post) REQUIRE p.id IS UNIQUE;
-
-CREATE CONSTRAINT comment_id IF NOT EXISTS
-FOR (c:Comment) REQUIRE c.id IS UNIQUE;
-
-CREATE CONSTRAINT tag_name IF NOT EXISTS
-FOR (t:Tag) REQUIRE t.name IS UNIQUE;
-
-CREATE CONSTRAINT topic_id IF NOT EXISTS
-FOR (t:Topic) REQUIRE t.id IS UNIQUE;
-
-CREATE CONSTRAINT report_id IF NOT EXISTS
-FOR (r:Report) REQUIRE r.id IS UNIQUE;
-
-CREATE CONSTRAINT group_id IF NOT EXISTS
-FOR (g:Group) REQUIRE g.id IS UNIQUE;
+CREATE CONSTRAINT user_id IF NOT EXISTS FOR (u:User) REQUIRE u.id IS UNIQUE;
+CREATE CONSTRAINT post_id IF NOT EXISTS FOR (p:Post) REQUIRE p.id IS UNIQUE;
+CREATE CONSTRAINT comment_id IF NOT EXISTS FOR (c:Comment) REQUIRE c.id IS UNIQUE;
+CREATE CONSTRAINT tag_name IF NOT EXISTS FOR (t:Tag) REQUIRE t.name IS UNIQUE;
+CREATE CONSTRAINT topic_id IF NOT EXISTS FOR (t:Topic) REQUIRE t.id IS UNIQUE;
+CREATE CONSTRAINT report_id IF NOT EXISTS FOR (r:Report) REQUIRE r.id IS UNIQUE;
+CREATE CONSTRAINT group_id IF NOT EXISTS FOR (g:Group) REQUIRE g.id IS UNIQUE;
 
 // Index
 CREATE INDEX user_username IF NOT EXISTS FOR (u:User) ON (u.username);
@@ -37,7 +24,7 @@ SET u.username = user.username,
     u.privacy  = user.privacy;
 
 /* Post(id, authorId, content, visibility, mediaUrl?, likeCount?, commentCount?) */
-WITH {id:'p_1001', authorId:'u_001', content:'Bonjour Mont-Blanc !', visibility:'public', mediaUrl:null, likeCount:0, commentCount:0} AS post
+WITH {id:'p_1001', authorId:'u_001', content:'Je suis au Mont-Blanc', visibility:'public', mediaUrl:null, likeCount:0, commentCount:0} AS post
 MERGE (author:User {id: post.authorId})
 MERGE (p:Post {id: post.id})
 SET p.content       = post.content,
