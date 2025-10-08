@@ -39,7 +39,8 @@ Ce projet propose une étude de cas sur la modélisation et l’analyse de rése
 ## Structure du projet
 
 - `data/` : jeux de données d’exemple
-- `generator.py` et `import.py` : scripts Python pour l’import et l’analyse
+- `generator.py` et `import.py` : scripts Python pour l’import et la génération de données
+- `modele.cypher` : scripts Cypher pour la création du modèle de graphe Neo4j
 - `README.md` : documentation du projet
 
 ## Ressources
