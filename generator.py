@@ -8,7 +8,7 @@ Faker.seed(42)
 random.seed(42)
 
 # ============================================
-# PARAMÈTRES
+# PARAMÈTRES POUR INSERTIONS
 # ============================================
 N_USERS = 3000
 TARGET_POSTS = 5000
@@ -18,7 +18,7 @@ N_GROUPS = 50
 N_REPORTS = 200
 DAYS = 365
 
-# Communautés avec leurs topics et tags
+# Communautés avec sujets et tags
 COMMUNITIES = [
     {"id": "tech", "tags": ["ia", "python", "dev", "cloud", "api"]},
     {"id": "sport", "tags": ["running", "fitness", "yoga", "football", "natation"]},
@@ -28,20 +28,20 @@ COMMUNITIES = [
 ]
 N_COMM = len(COMMUNITIES)
 
-# Privacy pour users : 55% private, 45% public
+# compte : 55% privés, 45% publique
 PRIVACY_OPTIONS = ["private", "public"]
 PRIVACY_WEIGHTS = [0.55, 0.45]
 
-# Visibilité pour posts : public/followers/private
+# Visibilité pour posts : 60% public, 30% followers_only, 10% private
 POST_VISIBILITY_OPTIONS = ["public", "followers_only", "private"]
 POST_VISIBILITY_WEIGHTS = [0.6, 0.3, 0.1]
 
-# Reasons pour reports
+# Raisons pour reports
 REPORT_REASONS = ["spam", "hate_speech", "harassment", "fake_news", "inappropriate_content"]
 REPORT_STATUS = ["open", "in_review", "resolved", "dismissed"]
 
 # ============================================
-# HELPERS
+# FONCTIONS
 # ============================================
 def ndt(days_back):
     """Génère une date aléatoire dans les X derniers jours"""
@@ -50,7 +50,7 @@ def ndt(days_back):
     return dt.isoformat(timespec='seconds')
 
 def random_media_url():
-    """Génère une URL fictive d'image"""
+    """Génère une URL"""
     if random.random() < 0.3:  # 30% de posts sans média
         return None
     hash_id = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz0123456789', k=12))
@@ -59,7 +59,7 @@ def random_media_url():
     return f"https://cdn.socialnet.com/media/{hash_id}.{ext}"
 
 def dump_ndjson(path, rows):
-    """Sauvegarde en format NDJSON"""
+    """Sauvegarde en NDJSON"""
     with open(path, "w", encoding="utf-8") as f:
         for r in rows:
             f.write(json.dumps(r, ensure_ascii=False) + "\n")
@@ -67,7 +67,7 @@ def dump_ndjson(path, rows):
 # ============================================
 # GÉNÉRATION USERS
 # ============================================
-print("🔨 Génération des utilisateurs...")
+print("Génération users")
 users = []
 cid_by_user = {}
 
@@ -85,9 +85,9 @@ for i in range(N_USERS):
     cid_by_user[user_id] = c["id"]
 
 # ============================================
-# GÉNÉRATION FOLLOWS (graphe)
+# GÉNÉRATION FOLLOWS
 # ============================================
-print("🔗 Génération des relations FOLLOWS...")
+print("Génération des relations FOLLOWS")
 edges_dir = []
 neighbors_out = defaultdict(set)
 neighbors_in = defaultdict(set)
@@ -98,7 +98,7 @@ def try_add(a, b):
         neighbors_out[a].add(b)
         neighbors_in[b].add(a)
 
-# Communautés denses
+# Communautés importantes
 for c in COMMUNITIES:
     members = [i for i in range(N_USERS) if users[i]["community"] == c["id"]]
     k = min(len(members), 15)
@@ -113,7 +113,7 @@ for _ in range(N_USERS * 2):
         continue
     try_add(a, b)
 
-# Attachement préférentiel
+# Attachement entre les gens
 for _ in range(N_USERS * 3):
     a = random.randrange(N_USERS)
     if len(neighbors_in) == 0:
@@ -139,7 +139,7 @@ follows = [
 # ============================================
 # GÉNÉRATION POSTS
 # ============================================
-print("📝 Génération des posts...")
+print("Génération des posts")
 in_deg = defaultdict(int)
 for _, b in edges_dir:
     in_deg[b] += 1
@@ -177,8 +177,8 @@ for i, q in enumerate(quota):
             "mediaUrl": random_media_url(),
             "createdAt": created,
             "topic": topic,
-            "likeCount": 0,  # Sera calculé après
-            "commentCount": 0  # Sera calculé après
+            "likeCount": 0,  # calculé après
+            "commentCount": 0  # calculé après
         })
         
         # Tags (1 à 3)
@@ -193,9 +193,9 @@ for i, q in enumerate(quota):
 # ============================================
 # GÉNÉRATION POST_TAGS
 # ============================================
-print("🏷️  Génération des tags...")
+print("Génération des tags")
 
-# Liste de tags par communauté (plus cohérent)
+# Liste tags par communauté
 COMMUNITY_TAGS = {
     "tech": ["ia", "python", "dev", "cloud", "api", "javascript", "docker", "kubernetes", "react", "nodejs"],
     "sport": ["running", "fitness", "yoga", "football", "natation", "cyclisme", "musculation", "marathon", "crossfit", "nutrition"],
@@ -204,7 +204,7 @@ COMMUNITY_TAGS = {
     "voyage": ["montagne", "plage", "roadtrip", "backpack", "citytrip", "aventure", "camping", "randonnee", "photographie", "culture"]
 }
 
-# Tags génériques populaires
+# Tags populaires
 GENERIC_TAGS = ["inspiration", "lifestyle", "weekend", "motivation", "friends", "family", "nature", "art", "music", "fun"]
 
 post_tags = []
@@ -227,13 +227,13 @@ for post in posts:
                 # Tag de la communauté
                 tag = random.choice(community_tags)
             else:
-                # Tag générique
+                # Tag populaires
                 tag = random.choice(GENERIC_TAGS)
             
             if tag not in selected_tags:
                 selected_tags.append(tag)
         
-        # Ajouter les tags pour ce post
+        # Ajouter les tags au post
         for tag in selected_tags:
             post_tags.append({
                 "postId": post["id"],
@@ -245,7 +245,7 @@ print(f"  → {len(post_tags)} associations post-tag créées")
 # ============================================
 # GÉNÉRATION LIKES
 # ============================================
-print("❤️ Génération des likes...")
+print("Génération des likes")
 likes = []
 liked_pairs = set()
 all_users = [u["id"] for u in users]
@@ -264,11 +264,10 @@ for _ in range(TARGET_LIKES):
         same = (cid_by_user[v] == author_c)
         if random.random() < (0.7 if same else 0.3):
             liked_pairs.add((v, p["id"]))
-            # ✅ FIX : Utiliser likedAt au lieu de createdAt
             likes.append({
                 "userId": v,
                 "postId": p["id"],
-                "likedAt": ndt(DAYS)  # ✅ Timestamp aléatoire
+                "likedAt": ndt(DAYS)  # Timestamp aléatoire
             })
             break
 
@@ -286,20 +285,19 @@ for i in range(TARGET_COMMENTS):
         if v == p["authorId"] and random.random() < 0.6:
             continue
 
-        # ✅ FIX : Utiliser "content" au lieu de "text"
         comments.append({
             "id": f"c_{i+1:07d}",
             "authorId": v,
             "postId": p["id"],
             "createdAt": ndt(DAYS),
-            "content": fake.sentence(nb_words=12)  # ✅ "content"
+            "content": fake.sentence(nb_words=12)  # texte aléatoire pour le commentaire
         })
         break
 
 # ============================================
 # CALCUL likeCount et commentCount
 # ============================================
-print("🔢 Calcul des compteurs...")
+print("Calcul likeCount et commentCount")
 like_count_by_post = defaultdict(int)
 comment_count_by_post = defaultdict(int)
 
@@ -316,7 +314,7 @@ for post in posts:
 # ============================================
 # GÉNÉRATION GROUPS
 # ============================================
-print("👥 Génération des groupes...")
+print("Génération des groupes")
 groups = []
 group_members = []
 
@@ -324,7 +322,6 @@ for i in range(N_GROUPS):
     g_id = f"g_{i+1:03d}"
     community = COMMUNITIES[i % N_COMM]
     
-    # ✅ FIX : Sélectionner un créateur du groupe
     community_users = [u["id"] for u in users if u["community"] == community["id"]]
     creator = random.choice(community_users) if community_users else all_users[0]
 
@@ -332,8 +329,8 @@ for i in range(N_GROUPS):
         "id": g_id,
         "name": f"{community['id'].capitalize()} - {fake.catch_phrase()}",
         "visibility": random.choice(["public", "private"]),
-        "createdBy": creator,  # ✅ Ajout de createdBy
-        "description": fake.text(max_nb_chars=200),  # ✅ Ajout description
+        "createdBy": creator,
+        "description": fake.text(max_nb_chars=200), 
         "createdAt": ndt(DAYS)
     })
 
@@ -359,22 +356,22 @@ for i in range(N_GROUPS):
 # ============================================
 # GÉNÉRATION REPORTS
 # ============================================
-print("🚨 Génération des reports...")
+print("Génération des reports")
 reports = []
 report_relations = []
 
-# Constitution des entités reportables avec leur type
+# Création des reports avec type
 reportable_entities = (
     [{"type": "Post", "id": p["id"]} for p in posts] +
     [{"type": "Comment", "id": c["id"]} for c in comments] +
-    [{"type": "User", "id": u["id"]} for u in random.sample(users, k=min(500, len(users)))]  # Sample d'users
+    [{"type": "User", "id": u["id"]} for u in random.sample(users, k=min(500, len(users)))]  # Sample d'utilisateurs
 )
 
 for i in range(N_REPORTS):
     entity = random.choice(reportable_entities)
     reporter = random.choice(all_users)
     
-    # S'assurer qu'un user ne se reporte pas lui-même
+    # Un user ne se reporte pas lui-même
     if entity["type"] == "User" and entity["id"] == reporter:
         continue
     
@@ -399,7 +396,7 @@ for i in range(N_REPORTS):
 # ============================================
 # EXPORT
 # ============================================
-print("💾 Export des fichiers...")
+print("Export des fichiers...")
 dump_ndjson("data/users.ndjson", users)
 dump_ndjson("data/follows.ndjson", follows)
 dump_ndjson("data/posts.ndjson", posts)
@@ -411,7 +408,7 @@ dump_ndjson("data/group_members.ndjson", group_members)
 dump_ndjson("data/reports.ndjson", reports)
 dump_ndjson("data/report_relations.ndjson", report_relations) 
 
-print("\n✅ Génération terminée !")
+print("\n✅ Génération terminée !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 print(f"  Users: {len(users)}")
 print(f"  Follows: {len(follows)}")
 print(f"  Posts: {len(posts)}")

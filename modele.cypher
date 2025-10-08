@@ -2,7 +2,7 @@
 /*  CONTRAINTES ET INDEX                        */
 /* ============================================ */
 
-// Contraintes d'unicité
+// Contraintes clés primaires
 CREATE CONSTRAINT user_id IF NOT EXISTS FOR (u:User) REQUIRE u.id IS UNIQUE;
 CREATE CONSTRAINT post_id IF NOT EXISTS FOR (p:Post) REQUIRE p.id IS UNIQUE;
 CREATE CONSTRAINT comment_id IF NOT EXISTS FOR (c:Comment) REQUIRE c.id IS UNIQUE;
@@ -11,7 +11,7 @@ CREATE CONSTRAINT topic_id IF NOT EXISTS FOR (t:Topic) REQUIRE t.id IS UNIQUE;
 CREATE CONSTRAINT report_id IF NOT EXISTS FOR (r:Report) REQUIRE r.id IS UNIQUE;
 CREATE CONSTRAINT group_id IF NOT EXISTS FOR (g:Group) REQUIRE g.id IS UNIQUE;
 
-// Index de recherche
+// Index
 CREATE INDEX user_username IF NOT EXISTS FOR (u:User) ON (u.username);
 CREATE INDEX post_visibility IF NOT EXISTS FOR (p:Post) ON (p.visibility);
 CREATE INDEX group_visibility IF NOT EXISTS FOR (g:Group) ON (g.visibility);

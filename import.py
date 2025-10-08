@@ -18,13 +18,13 @@ class Neo4jImporter:
         self.driver.close()
     
     def clear_database(self):
-        """Nettoie la base de données"""
+        """Nettoie BDD"""
         with self.driver.session() as session:
             session.run("MATCH (n) DETACH DELETE n")
-            print("✅ Base de données nettoyée")
+            print("BDD nettoyée")
     
     def create_constraints(self):
-        """Crée les contraintes et index"""
+        """Crée contraintes et index"""
         constraints = [
             "CREATE CONSTRAINT user_id IF NOT EXISTS FOR (u:User) REQUIRE u.id IS UNIQUE",
             "CREATE CONSTRAINT post_id IF NOT EXISTS FOR (p:Post) REQUIRE p.id IS UNIQUE",
@@ -39,8 +39,8 @@ class Neo4jImporter:
                 try:
                     session.run(constraint)
                 except Exception as e:
-                    pass  # Contrainte existe déjà
-        print("✅ Contraintes créées")
+                    pass  # si contrainte existe déjà
+        print("Contraintes créées")
     
     def load_ndjson(self, filename):
         """Charge un fichier NDJSON"""
@@ -51,7 +51,7 @@ class Neo4jImporter:
     def import_users(self):
         """Import des utilisateurs"""
         users = self.load_ndjson("users.ndjson")
-        users = [u for u in users if u.get('id')]  # Filtrer les IDs null
+        users = [u for u in users if u.get('id')]  # Filtrer les ID null
         
         query = """
         UNWIND $users AS user
@@ -64,7 +64,7 @@ class Neo4jImporter:
         
         with self.driver.session() as session:
             session.run(query, users=users)
-        print(f"✅ {len(users)} utilisateurs importés")
+        print(f"{len(users)} utilisateurs importés")
 
     def import_follows(self):
         """Import des relations FOLLOWS"""
@@ -81,7 +81,7 @@ class Neo4jImporter:
         
         with self.driver.session() as session:
             session.run(query, follows=follows)
-        print(f"✅ {len(follows)} follows importés")
+        print(f"{len(follows)} follows importés")
 
     def import_posts(self):
         """Import des posts"""
@@ -103,7 +103,7 @@ class Neo4jImporter:
         
         with self.driver.session() as session:
             session.run(query, posts=posts)
-        print(f"✅ {len(posts)} posts importés")
+        print(f"{len(posts)} posts importés")
 
     def import_post_tags(self):
         """Import des tags"""
@@ -128,7 +128,7 @@ class Neo4jImporter:
         
         with self.driver.session() as session:
             session.run(query, post_tags=post_tags)
-        print(f"✅ {len(post_tags)} tags importés")
+        print(f"{len(post_tags)} tags importés")
 
     def import_likes(self):
         """Import des likes"""
@@ -145,7 +145,7 @@ class Neo4jImporter:
         
         with self.driver.session() as session:
             session.run(query, likes=likes)
-        print(f"✅ {len(likes)} likes importés")
+        print(f"{len(likes)} likes importés")
 
     def import_comments(self):
         """Import des commentaires"""
@@ -165,7 +165,7 @@ class Neo4jImporter:
         
         with self.driver.session() as session:
             session.run(query, comments=comments)
-        print(f"✅ {len(comments)} commentaires importés")
+        print(f"{len(comments)} commentaires importés")
 
     def import_groups(self):
         """Import des groupes"""
@@ -185,7 +185,7 @@ class Neo4jImporter:
         
         with self.driver.session() as session:
             session.run(query, groups=groups)
-        print(f"✅ {len(groups)} groupes importés")
+        print(f"{len(groups)} groupes importés")
 
     def import_group_members(self):
         """Import des membres de groupes"""
@@ -203,7 +203,7 @@ class Neo4jImporter:
         
         with self.driver.session() as session:
             session.run(query, members=members)
-        print(f"✅ {len(members)} membres de groupes importés")
+        print(f"{len(members)} membres de groupes importés")
 
     def import_reports(self):
         """Import des reports"""
@@ -220,7 +220,7 @@ class Neo4jImporter:
         
         with self.driver.session() as session:
             session.run(query, reports=reports)
-        print(f"✅ {len(reports)} reports importés")
+        print(f"{len(reports)} reports importés")
 
     def import_report_relations(self):
         """Import des relations de reports"""
@@ -230,7 +230,7 @@ class Neo4jImporter:
             if r.get('reportedBy') and r.get('reportId') and r.get('targetType') and r.get('targetId')
         ]
         
-        # Import en 3 passes selon le type de cible
+        # Import selon 3 catégories selon le type du report
         for target_type in ['Post', 'Comment', 'User']:
             filtered = [r for r in relations if r['targetType'] == target_type]
             
@@ -268,11 +268,11 @@ class Neo4jImporter:
             with self.driver.session() as session:
                 session.run(query, relations=filtered)
         
-        print(f"✅ {len(relations)} relations de reports importées")
+        print(f"{len(relations)} relations de reports importées")
     
     def run_full_import(self):
         """Lance l'import complet"""
-        print("🚀 Début de l'import...")
+        print("Début de l'import...")
         
         self.clear_database()
         self.create_constraints()
@@ -287,8 +287,8 @@ class Neo4jImporter:
         self.import_group_members()
         self.import_reports()
         self.import_report_relations()
-        
-        print("\n✅ Import terminé avec succès!")
+
+        print("\nImport terminé !!!!!!!!!!!!!!!!!!!!!")
 
 if __name__ == "__main__":
     importer = Neo4jImporter(NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD)

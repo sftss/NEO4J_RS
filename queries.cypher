@@ -1,4 +1,4 @@
-// Explorer 50 nœuds aléatoires et leurs relations
+// Ne marche plus tant que l'extension Neo4j ne revient pas
 MATCH (n)
 WITH n, rand() AS random
 ORDER BY random
