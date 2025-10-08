@@ -1,6 +1,4 @@
-import random
-import json
-import math
+import random, json, math
 from collections import defaultdict
 from faker import Faker
 from datetime import datetime, timedelta
