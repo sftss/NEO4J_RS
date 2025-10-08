@@ -48,3 +48,7 @@ Ce projet propose une étude de cas sur la modélisation et l’analyse de rése
 - [Documentation Neo4j](https://neo4j.com/docs/)
 - [Cypher Query Language](https://neo4j.com/developer/cypher/)
 
+## Auteurs
+- [Valenper](https://github.com/Valenper)
+- [Sefer](https://github.com/sftss)
+- [feyy7435](https://github.com/feyy7435)
