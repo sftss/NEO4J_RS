@@ -43,9 +43,9 @@ REPORT_STATUS = ["open", "in_review", "resolved", "dismissed"]
 # ============================================
 # FONCTIONS
 # ============================================
-def ndt(days_back):
+def ndt(days_avant):
     """Génère une date aléatoire dans les X derniers jours"""
-    delta = timedelta(days=random.randint(0, days_back))
+    delta = timedelta(days=random.randint(0, days_avant))
     dt = datetime.now() - delta
     return dt.isoformat(timespec='seconds')
 
@@ -113,7 +113,7 @@ for _ in range(N_USERS * 2):
         continue
     try_add(a, b)
 
-# Attachement entre les gens
+# attachement entre les gens
 for _ in range(N_USERS * 3):
     a = random.randrange(N_USERS)
     if len(neighbors_in) == 0:
@@ -274,7 +274,7 @@ for _ in range(TARGET_LIKES):
 # ============================================
 # GÉNÉRATION COMMENTS
 # ============================================
-print("💬 Génération des commentaires...")
+print("Génération des commentaires")
 comments = []
 
 for i in range(TARGET_COMMENTS):

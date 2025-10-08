@@ -23,7 +23,7 @@ class Neo4jImporter:
             session.run("MATCH (n) DETACH DELETE n")
             print("BDD nettoyée")
     
-    def create_constraints(self):
+    def create_constraints_indexes(self):
         """Crée contraintes et index"""
         constraints = [
             "CREATE CONSTRAINT user_id IF NOT EXISTS FOR (u:User) REQUIRE u.id IS UNIQUE",
@@ -33,14 +33,25 @@ class Neo4jImporter:
             "CREATE CONSTRAINT report_id IF NOT EXISTS FOR (r:Report) REQUIRE r.id IS UNIQUE",
             "CREATE CONSTRAINT group_id IF NOT EXISTS FOR (g:Group) REQUIRE g.id IS UNIQUE",
         ]
+        indexes = [
+            "CREATE INDEX user_username IF NOT EXISTS FOR (u:User) ON (u.username)",
+            "CREATE INDEX user_privacy IF NOT EXISTS FOR (u:User) ON (u.privacy)",
+            "CREATE INDEX post_visibility IF NOT EXISTS FOR (p:Post) ON (p.visibility)",
+            "CREATE INDEX tag_name_index IF NOT EXISTS FOR (t:Tag) ON (t.name)",
+        ]
         
         with self.driver.session() as session:
             for constraint in constraints:
                 try:
                     session.run(constraint)
-                except Exception as e:
+                except Exception:
                     pass  # si contrainte existe déjà
-        print("Contraintes créées")
+            for index in indexes:
+                try:
+                    session.run(index)
+                except Exception:
+                    pass  # si index existe déjà
+        print("Contraintes et index créés")
     
     def load_ndjson(self, filename):
         """Charge un fichier NDJSON"""
@@ -108,15 +119,15 @@ class Neo4jImporter:
     def import_post_tags(self):
         """Import des tags"""
         post_tags = self.load_ndjson("post_tags.ndjson")
-        
-        # Filtrer les entrées invalides
+
+        # filtre entrée invalide
         post_tags = [
             pt for pt in post_tags 
             if pt.get('postId') and pt.get('tagName') and pt['tagName'].strip()
         ]
         
         if not post_tags:
-            print("⚠️  Aucun tag valide à importer")
+            print("Aucun tag valide à importer!!!")
             return
         
         query = """
@@ -230,7 +241,7 @@ class Neo4jImporter:
             if r.get('reportedBy') and r.get('reportId') and r.get('targetType') and r.get('targetId')
         ]
         
-        # Import selon 3 catégories selon le type du report
+        # import selon 3 catégories ET type du report
         for target_type in ['Post', 'Comment', 'User']:
             filtered = [r for r in relations if r['targetType'] == target_type]
             
@@ -275,7 +286,7 @@ class Neo4jImporter:
         print("Début de l'import...")
         
         self.clear_database()
-        self.create_constraints()
+        self.create_constraints_indexes()
         
         self.import_users()
         self.import_follows()
