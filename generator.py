@@ -98,7 +98,7 @@ def try_add(a, b):
         neighbors_out[a].add(b)
         neighbors_in[b].add(a)
 
-# Communautés importantes
+# C=communautés importantes
 for c in COMMUNITIES:
     members = [i for i in range(N_USERS) if users[i]["community"] == c["id"]]
     k = min(len(members), 15)
@@ -106,7 +106,7 @@ for c in COMMUNITIES:
         for b in random.sample(members, k):
             try_add(a, b)
 
-# Follows intercommunautés
+# F=follows intercommunautés
 for _ in range(N_USERS * 2):
     a, b = random.sample(range(N_USERS), 2)
     if cid_by_user[users[a]["id"]] == cid_by_user[users[b]["id"]]:
@@ -181,7 +181,7 @@ for i, q in enumerate(quota):
             "commentCount": 0  # calculé après
         })
         
-        # Tags (1 à 3)
+        # tags (1 à 3)
         k = random.randint(1, 3)
         chosen = random.sample(
             next(c["tags"] for c in COMMUNITIES if c["id"] == author["community"]), 
@@ -195,7 +195,7 @@ for i, q in enumerate(quota):
 # ============================================
 print("Génération des tags")
 
-# Liste tags par communauté
+# lis tags par communauté
 COMMUNITY_TAGS = {
     "tech": ["ia", "python", "dev", "cloud", "api", "javascript", "docker", "kubernetes", "react", "nodejs"],
     "sport": ["running", "fitness", "yoga", "football", "natation", "cyclisme", "musculation", "marathon", "crossfit", "nutrition"],
@@ -204,7 +204,7 @@ COMMUNITY_TAGS = {
     "voyage": ["montagne", "plage", "roadtrip", "backpack", "citytrip", "aventure", "camping", "randonnee", "photographie", "culture"]
 }
 
-# Tags populaires
+# tags populaires
 GENERIC_TAGS = ["inspiration", "lifestyle", "weekend", "motivation", "friends", "family", "nature", "art", "music", "fun"]
 
 post_tags = []
@@ -217,23 +217,23 @@ for post in posts:
     if random.random() < 0.7:
         num_tags = random.randint(1, 5)
         
-        # 80% des tags viennent de la communauté de l'auteur
+        # 80% des tags = vient de la communauté de l'user
         community_tags = COMMUNITY_TAGS.get(author_community, [])
         
         selected_tags = []
         
         for _ in range(num_tags):
             if random.random() < 0.8 and community_tags:
-                # Tag de la communauté
+                # tag de la commu
                 tag = random.choice(community_tags)
             else:
-                # Tag populaires
+                # tag populaires
                 tag = random.choice(GENERIC_TAGS)
             
             if tag not in selected_tags:
                 selected_tags.append(tag)
         
-        # Ajouter les tags au post
+        # ajout tags au post
         for tag in selected_tags:
             post_tags.append({
                 "postId": post["id"],
@@ -267,7 +267,7 @@ for _ in range(TARGET_LIKES):
             likes.append({
                 "userId": v,
                 "postId": p["id"],
-                "likedAt": ndt(DAYS)  # Timestamp aléatoire
+                "likedAt": ndt(DAYS)  # timestamp aléatoire
             })
             break
 
@@ -290,7 +290,7 @@ for i in range(TARGET_COMMENTS):
             "authorId": v,
             "postId": p["id"],
             "createdAt": ndt(DAYS),
-            "content": fake.sentence(nb_words=12)  # texte aléatoire pour le commentaire
+            "content": fake.sentence(nb_words=12)  # texte aléatoire
         })
         break
 
@@ -334,11 +334,11 @@ for i in range(N_GROUPS):
         "createdAt": ndt(DAYS)
     })
 
-    # Membres du groupe (5 à 30 membres)
+    # membres du groupe (5 à 30)
     n_members = random.randint(5, 30)
     selected_members = random.sample(community_users, min(n_members, len(community_users)))
 
-    # Premier membre = admin (le créateur)
+    # 1er membre = admin
     if creator not in selected_members:
         selected_members.insert(0, creator)
     
@@ -364,28 +364,28 @@ report_relations = []
 reportable_entities = (
     [{"type": "Post", "id": p["id"]} for p in posts] +
     [{"type": "Comment", "id": c["id"]} for c in comments] +
-    [{"type": "User", "id": u["id"]} for u in random.sample(users, k=min(500, len(users)))]  # Sample d'utilisateurs
+    [{"type": "User", "id": u["id"]} for u in random.sample(users, k=min(500, len(users)))]  # sample d'users
 )
 
 for i in range(N_REPORTS):
     entity = random.choice(reportable_entities)
     reporter = random.choice(all_users)
-    
-    # Un user ne se reporte pas lui-même
+
+    # un user ne peut pas se reporter lui-même
     if entity["type"] == "User" and entity["id"] == reporter:
         continue
     
     report_id = f"r_{i+1:05d}"
     
-    # Création du report
+    # création du report
     reports.append({
         "id": report_id,
         "reason": random.choice(REPORT_REASONS),
         "status": random.choice(REPORT_STATUS),
         "createdAt": ndt(DAYS)
     })
-    
-    # Relation REPORTED et TARGET
+
+    # relation REPORTED et TARGET
     report_relations.append({
         "reportId": report_id,
         "reportedBy": reporter,
