@@ -44,12 +44,12 @@ REPORT_REASONS = ["spam", "hate_speech", "harassment", "fake_news", "inappropria
 REPORT_STATUS = ["open", "in_review", "resolved", "dismissed"]
 
 # NEW: paramètres "pics"
-INFLUENCER_RATIO = 0.06     # ~6% d'influenceurs (pics de follows)
-POST_SPIKE_RATIO = 0.08     # ~8% d'auteurs publient davantage
-LIKE_MAGNET_RATIO = 0.06    # ~6% d'auteurs reçoivent beaucoup plus de likes
-POST_SPIKE_FACTOR = 2.0     # multiplicateur de posts
-LIKE_TARGET_FACTOR = 3.0    # multiplicateur de probabilité d'être liké
-INFLUENCER_FOLLOW_BOOST = (1, 3)  # chaque user suit 1..3 influenceurs (essais)
+INFLUENCER_RATIO = 0.06     # 6% d'influenceurs
+POST_SPIKE_RATIO = 0.08     # 8% de "blogueurs" 
+LIKE_MAGNET_RATIO = 0.06    # 6% reçoivent beaucoup de likes
+POST_SPIKE_FACTOR = 2.0     # multiplicateur posts
+LIKE_TARGET_FACTOR = 3.0    # multiplicateur probabilité d'être liké
+INFLUENCER_FOLLOW_BOOST = (1, 3)  # chaque user suit 1 à 3 influenceurs
 
 # ============================================
 # FONCTIONS
@@ -83,7 +83,7 @@ users = []
 cid_by_user = {}
 
 for i in range(N_USERS):
-    # NEW: assignation pondérée aux communautés (au lieu de i % N_COMM)
+    # liaison pondérée aux communautés
     c = random.choices(COMMUNITIES, weights=COMMUNITY_WEIGHTS, k=1)[0]
     user_id = f"u_{i:05d}"
     users.append({
@@ -96,7 +96,7 @@ for i in range(N_USERS):
     })
     cid_by_user[user_id] = c["id"]
 
-# NEW: mappages utiles + sets "pics"
+# mappages pour les "pics"
 id2idx = {u["id"]: i for i, u in enumerate(users)}
 influencers = set(random.sample(range(N_USERS), max(1, int(N_USERS * INFLUENCER_RATIO))))
 post_spikers = set(random.sample(range(N_USERS), max(1, int(N_USERS * POST_SPIKE_RATIO))))
@@ -116,7 +116,7 @@ def try_add(a, b):
         neighbors_out[a].add(b)
         neighbors_in[b].add(a)
 
-# C=communautés importantes (intra)
+# communautés importantes
 for c in COMMUNITIES:
     members = [i for i in range(N_USERS) if users[i]["community"] == c["id"]]
     k = min(len(members), 15)
@@ -124,22 +124,22 @@ for c in COMMUNITIES:
         for b in random.sample(members, k):
             try_add(a, b)
 
-# F=follows intercommunautés
+# follows intercommunautés
 for _ in range(N_USERS * 2):
     a, b = random.sample(range(N_USERS), 2)
     if cid_by_user[users[a]["id"]] == cid_by_user[users[b]["id"]]:
         continue
     try_add(a, b)
 
-# NEW: boost vers influenceurs (pics de follows)
+# pics de follows
 infl_list = list(influencers)
 for a in range(N_USERS):
     k = random.randint(*INFLUENCER_FOLLOW_BOOST)
     for b in random.sample(infl_list, min(k, len(infl_list))):
-        if random.random() < 0.6:  # probabilité modérée pour rester réaliste
+        if random.random() < 0.6:  # 6%
             try_add(a, b)
 
-# attachement préférentiel (renforce les hubs existants)
+# attachement préférentiel
 for _ in range(N_USERS * 3):
     a = random.randrange(N_USERS)
     if len(neighbors_in) == 0:
@@ -170,7 +170,7 @@ in_deg = defaultdict(int)
 for _, b in edges_dir:
     in_deg[b] += 1
 
-# NEW: pics de posts pour certains auteurs (facteur multiplicatif)
+# pics de posts pour certains users
 weights = []
 for i in range(N_USERS):
     base = 1 + math.sqrt(in_deg[i])
@@ -213,8 +213,8 @@ for i, q in enumerate(quota):
             "likeCount": 0,      # calculé après
             "commentCount": 0    # calculé après
         })
-        
-        # tags (1 à 3) - graine initiale (sera remplacée par section tags détaillée)
+
+        # tags (1 à 3), sera remplacée par tags détaillée
         k = random.randint(1, 3)
         chosen = random.sample(
             next(c["tags"] for c in COMMUNITIES if c["id"] == author["community"]),
@@ -228,7 +228,7 @@ for i, q in enumerate(quota):
 # ============================================
 print("Génération des tags")
 
-# Liste tags par communauté
+# liste tags par communauté
 COMMUNITY_TAGS = {
     "tech":   ["ia", "python", "dev", "cloud", "api", "javascript", "docker", "kubernetes", "react", "nodejs"],
     "sport":  ["running", "fitness", "yoga", "football", "natation", "cyclisme", "musculation", "marathon", "crossfit", "nutrition"],
@@ -237,7 +237,7 @@ COMMUNITY_TAGS = {
     "voyage": ["montagne", "plage", "roadtrip", "backpack", "citytrip", "aventure", "camping", "randonnee", "photographie", "culture"]
 }
 
-# Tags populaires
+# tags populaires
 GENERIC_TAGS = ["inspiration", "lifestyle", "weekend", "motivation", "friends", "family", "nature", "art", "music", "fun"]
 
 post_tags = []
@@ -250,21 +250,21 @@ for post in posts:
     if random.random() < 0.7:
         num_tags = random.randint(1, 5)
         
-        # 80% des tags viennent de la communauté de l'auteur
+        # 80% des tags viennent de la communauté de l'user
         community_tags = COMMUNITY_TAGS.get(author_community, [])
         
         selected_tags = []
         for _ in range(num_tags):
             if random.random() < 0.8 and community_tags:
-                # Tag de la communauté
+                # tag dla communauté
                 tag = random.choice(community_tags)
             else:
-                # Tag populaires
+                # tag populaire
                 tag = random.choice(GENERIC_TAGS)
             if tag not in selected_tags:
                 selected_tags.append(tag)
-        
-        # Ajouter les tags au post
+
+        # ajout tags au post
         for tag in selected_tags:
             post_tags.append({
                 "postId": post["id"],
@@ -281,19 +281,19 @@ likes = []
 liked_pairs = set()
 all_users = [u["id"] for u in users]
 
-# NEW: biais de sélection des posts à liker (pics de likes pour certains auteurs)
+# biais pour les pics de likes pour certains users
 like_weight_by_post = []
 for p in posts:
-    ai = id2idx[p["authorId"]]           # index auteur
+    ai = id2idx[p["authorId"]]           # id user
     w = 1.0
     if ai in like_magnets:
-        w *= LIKE_TARGET_FACTOR          # auteurs "magnets" attirent plus de likes
+        w *= LIKE_TARGET_FACTOR          # users qui attirent plus de likes
     if ai in influencers:
-        w *= 1.5                         # les influenceurs aussi
+        w *= 1.5                         # influenceurs aussi
     like_weight_by_post.append(w)
 
 for _ in range(TARGET_LIKES):
-    # NEW: choix du post pondéré (au lieu de uniform)
+    # choix du post pondéré
     p = random.choices(posts, weights=like_weight_by_post, k=1)[0]
     author_c = cid_by_user[p["authorId"]]
 
@@ -320,7 +320,7 @@ for _ in range(TARGET_LIKES):
 print("Génération des commentaires")
 comments = []
 
-# NEW: 30% des posts sans aucun commentaire (strict)
+# 30% des posts sans commentaire
 zero_comment_posts = set()
 if len(posts) > 0:
     zero_comment_posts = set(p["id"] for p in random.sample(posts, int(0.30 * len(posts))))
@@ -332,7 +332,7 @@ for i in range(TARGET_COMMENTS):
         if p["id"] not in zero_comment_posts:
             break
     else:
-        # fallback rarissime: si tout échoue, choisir n'importe quel post commentable
+        # au cas où, choisir n'importe quel post
         candidates = [pp for pp in posts if pp["id"] not in zero_comment_posts]
         p = random.choice(candidates) if candidates else random.choice(posts)
 
