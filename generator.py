@@ -20,13 +20,16 @@ DAYS = 365
 
 # communautés avec sujets et tags
 COMMUNITIES = [
-    {"id": "tech", "tags": ["ia", "python", "dev", "cloud", "api"]},
-    {"id": "sport", "tags": ["running", "fitness", "yoga", "football", "natation"]},
+    {"id": "tech",   "tags": ["ia", "python", "dev", "cloud", "api"]},
+    {"id": "sport",  "tags": ["running", "fitness", "yoga", "football", "natation"]},
     {"id": "gaming", "tags": ["fps", "rpg", "esport", "console", "pc"]},
-    {"id": "cuisine", "tags": ["recette", "veggie", "dessert", "chef", "restaurant"]},
+    {"id": "cuisine","tags": ["recette", "veggie", "dessert", "chef", "restaurant"]},
     {"id": "voyage", "tags": ["montagne", "plage", "roadtrip", "backpack", "citytrip"]},
 ]
 N_COMM = len(COMMUNITIES)
+
+# NEW: répartitions inégales des communautés (tech et sport plus grosses)
+COMMUNITY_WEIGHTS = [0.35, 0.25, 0.20, 0.12, 0.08]
 
 # compte : 55% privés, 45% publique
 PRIVACY_OPTIONS = ["private", "public"]
@@ -39,6 +42,14 @@ POST_VISIBILITY_WEIGHTS = [0.6, 0.3, 0.1]
 # Raisons pour reports
 REPORT_REASONS = ["spam", "hate_speech", "harassment", "fake_news", "inappropriate_content"]
 REPORT_STATUS = ["open", "in_review", "resolved", "dismissed"]
+
+# NEW: paramètres "pics"
+INFLUENCER_RATIO = 0.06     # 6% d'influenceurs
+POST_SPIKE_RATIO = 0.08     # 8% de "blogueurs" 
+LIKE_MAGNET_RATIO = 0.06    # 6% reçoivent beaucoup de likes
+POST_SPIKE_FACTOR = 2.0     # multiplicateur posts
+LIKE_TARGET_FACTOR = 3.0    # multiplicateur probabilité d'être liké
+INFLUENCER_FOLLOW_BOOST = (1, 3)  # chaque user suit 1 à 3 influenceurs
 
 # ============================================
 # FONCTIONS
@@ -72,7 +83,8 @@ users = []
 cid_by_user = {}
 
 for i in range(N_USERS):
-    c = COMMUNITIES[i % N_COMM]
+    # liaison pondérée aux communautés
+    c = random.choices(COMMUNITIES, weights=COMMUNITY_WEIGHTS, k=1)[0]
     user_id = f"u_{i:05d}"
     users.append({
         "id": user_id,
@@ -83,6 +95,12 @@ for i in range(N_USERS):
         "community": c["id"]
     })
     cid_by_user[user_id] = c["id"]
+
+# mappages pour les "pics"
+id2idx = {u["id"]: i for i, u in enumerate(users)}
+influencers = set(random.sample(range(N_USERS), max(1, int(N_USERS * INFLUENCER_RATIO))))
+post_spikers = set(random.sample(range(N_USERS), max(1, int(N_USERS * POST_SPIKE_RATIO))))
+like_magnets = set(random.sample(range(N_USERS), max(1, int(N_USERS * LIKE_MAGNET_RATIO))))
 
 # ============================================
 # GÉNÉRATION FOLLOWS
@@ -113,7 +131,15 @@ for _ in range(N_USERS * 2):
         continue
     try_add(a, b)
 
-# attachement entre les gens
+# pics de follows
+infl_list = list(influencers)
+for a in range(N_USERS):
+    k = random.randint(*INFLUENCER_FOLLOW_BOOST)
+    for b in random.sample(infl_list, min(k, len(infl_list))):
+        if random.random() < 0.6:  # 6%
+            try_add(a, b)
+
+# attachement préférentiel
 for _ in range(N_USERS * 3):
     a = random.randrange(N_USERS)
     if len(neighbors_in) == 0:
@@ -129,10 +155,10 @@ for _ in range(N_USERS * 3):
 
 follows = [
     {
-        "followerId": f"u_{a:05d}", 
-        "followedId": f"u_{b:05d}", 
+        "followerId": f"u_{a:05d}",
+        "followedId": f"u_{b:05d}",
         "since": ndt(DAYS)
-    } 
+    }
     for (a, b) in edges_dir
 ]
 
@@ -144,7 +170,14 @@ in_deg = defaultdict(int)
 for _, b in edges_dir:
     in_deg[b] += 1
 
-weights = [1 + math.sqrt(in_deg[i]) for i in range(N_USERS)]
+# pics de posts pour certains users
+weights = []
+for i in range(N_USERS):
+    base = 1 + math.sqrt(in_deg[i])
+    if i in post_spikers:
+        base *= POST_SPIKE_FACTOR
+    weights.append(base)
+
 total_w = sum(weights)
 quota = [0] * N_USERS
 remaining = TARGET_POSTS
@@ -177,14 +210,14 @@ for i, q in enumerate(quota):
             "mediaUrl": random_media_url(),
             "createdAt": created,
             "topic": topic,
-            "likeCount": 0,  # calculé après
-            "commentCount": 0  # calculé après
+            "likeCount": 0,      # calculé après
+            "commentCount": 0    # calculé après
         })
-        
-        # tags (1 à 3)
+
+        # tags (1 à 3), sera remplacée par tags détaillée
         k = random.randint(1, 3)
         chosen = random.sample(
-            next(c["tags"] for c in COMMUNITIES if c["id"] == author["community"]), 
+            next(c["tags"] for c in COMMUNITIES if c["id"] == author["community"]),
             k
         )
         for t in chosen:
@@ -195,12 +228,12 @@ for i, q in enumerate(quota):
 # ============================================
 print("Génération des tags")
 
-# lis tags par communauté
+# liste tags par communauté
 COMMUNITY_TAGS = {
-    "tech": ["ia", "python", "dev", "cloud", "api", "javascript", "docker", "kubernetes", "react", "nodejs"],
-    "sport": ["running", "fitness", "yoga", "football", "natation", "cyclisme", "musculation", "marathon", "crossfit", "nutrition"],
+    "tech":   ["ia", "python", "dev", "cloud", "api", "javascript", "docker", "kubernetes", "react", "nodejs"],
+    "sport":  ["running", "fitness", "yoga", "football", "natation", "cyclisme", "musculation", "marathon", "crossfit", "nutrition"],
     "gaming": ["fps", "rpg", "esport", "console", "pc", "streaming", "mmo", "indie", "multiplayer", "vr"],
-    "cuisine": ["recette", "veggie", "dessert", "chef", "restaurant", "patisserie", "bio", "vegan", "gastronomie", "streetfood"],
+    "cuisine":["recette", "veggie", "dessert", "chef", "restaurant", "patisserie", "bio", "vegan", "gastronomie", "streetfood"],
     "voyage": ["montagne", "plage", "roadtrip", "backpack", "citytrip", "aventure", "camping", "randonnee", "photographie", "culture"]
 }
 
@@ -217,22 +250,20 @@ for post in posts:
     if random.random() < 0.7:
         num_tags = random.randint(1, 5)
         
-        # 80% des tags = vient de la communauté de l'user
+        # 80% des tags viennent de la communauté de l'user
         community_tags = COMMUNITY_TAGS.get(author_community, [])
         
         selected_tags = []
-        
         for _ in range(num_tags):
             if random.random() < 0.8 and community_tags:
-                # tag de la commu
+                # tag dla communauté
                 tag = random.choice(community_tags)
             else:
-                # tag populaires
+                # tag populaire
                 tag = random.choice(GENERIC_TAGS)
-            
             if tag not in selected_tags:
                 selected_tags.append(tag)
-        
+
         # ajout tags au post
         for tag in selected_tags:
             post_tags.append({
@@ -250,8 +281,20 @@ likes = []
 liked_pairs = set()
 all_users = [u["id"] for u in users]
 
+# biais pour les pics de likes pour certains users
+like_weight_by_post = []
+for p in posts:
+    ai = id2idx[p["authorId"]]           # id user
+    w = 1.0
+    if ai in like_magnets:
+        w *= LIKE_TARGET_FACTOR          # users qui attirent plus de likes
+    if ai in influencers:
+        w *= 1.5                         # influenceurs aussi
+    like_weight_by_post.append(w)
+
 for _ in range(TARGET_LIKES):
-    p = random.choice(posts)
+    # choix du post pondéré
+    p = random.choices(posts, weights=like_weight_by_post, k=1)[0]
     author_c = cid_by_user[p["authorId"]]
 
     for _ in range(30):
@@ -277,8 +320,21 @@ for _ in range(TARGET_LIKES):
 print("Génération des commentaires")
 comments = []
 
+# 30% des posts sans commentaire
+zero_comment_posts = set()
+if len(posts) > 0:
+    zero_comment_posts = set(p["id"] for p in random.sample(posts, int(0.30 * len(posts))))
+
 for i in range(TARGET_COMMENTS):
-    p = random.choice(posts)
+    # choisir un post qui N'EST PAS dans zero_comment_posts
+    for _ in range(20):
+        p = random.choice(posts)
+        if p["id"] not in zero_comment_posts:
+            break
+    else:
+        # au cas où, choisir n'importe quel post
+        candidates = [pp for pp in posts if pp["id"] not in zero_comment_posts]
+        p = random.choice(candidates) if candidates else random.choice(posts)
 
     for _ in range(30):
         v = random.choice(all_users)
@@ -330,7 +386,7 @@ for i in range(N_GROUPS):
         "name": f"{community['id'].capitalize()} - {fake.catch_phrase()}",
         "visibility": random.choice(["public", "private"]),
         "createdBy": creator,
-        "description": fake.text(max_nb_chars=200), 
+        "description": fake.text(max_nb_chars=200),
         "createdAt": ndt(DAYS)
     })
 
