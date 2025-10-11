@@ -17,7 +17,7 @@ Ce projet propose une étude de cas sur la modélisation et l’analyse de rése
 
 1. Clonez le dépôt :
     ```bash
-    git clone <url-du-repo>
+    git clone https://github.com/sftss/NEO4J_RS
     cd NEO4J_RS
     ```
 2. Créez et activez l’environnement virtuel :
