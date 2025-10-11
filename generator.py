@@ -18,7 +18,7 @@ N_GROUPS = 50
 N_REPORTS = 200
 DAYS = 365
 
-# Communautés avec sujets et tags
+# communautés avec sujets et tags
 COMMUNITIES = [
     {"id": "tech", "tags": ["ia", "python", "dev", "cloud", "api"]},
     {"id": "sport", "tags": ["running", "fitness", "yoga", "football", "natation"]},
@@ -32,7 +32,7 @@ N_COMM = len(COMMUNITIES)
 PRIVACY_OPTIONS = ["private", "public"]
 PRIVACY_WEIGHTS = [0.55, 0.45]
 
-# Visibilité pour posts : 60% public, 30% followers_only, 10% private
+# visibilité posts : 60% public, 30% followers_only, 10% private
 POST_VISIBILITY_OPTIONS = ["public", "followers_only", "private"]
 POST_VISIBILITY_WEIGHTS = [0.6, 0.3, 0.1]
 
@@ -98,7 +98,7 @@ def try_add(a, b):
         neighbors_out[a].add(b)
         neighbors_in[b].add(a)
 
-# C=communautés importantes
+# communautés importantes
 for c in COMMUNITIES:
     members = [i for i in range(N_USERS) if users[i]["community"] == c["id"]]
     k = min(len(members), 15)
@@ -106,7 +106,7 @@ for c in COMMUNITIES:
         for b in random.sample(members, k):
             try_add(a, b)
 
-# F=follows intercommunautés
+# follows intercommunautés
 for _ in range(N_USERS * 2):
     a, b = random.sample(range(N_USERS), 2)
     if cid_by_user[users[a]["id"]] == cid_by_user[users[b]["id"]]:
@@ -360,7 +360,7 @@ print("Génération des reports")
 reports = []
 report_relations = []
 
-# Création des reports avec type
+# création des reports avec type
 reportable_entities = (
     [{"type": "Post", "id": p["id"]} for p in posts] +
     [{"type": "Comment", "id": c["id"]} for c in comments] +
