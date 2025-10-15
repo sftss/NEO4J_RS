@@ -23,7 +23,7 @@ CREATE INDEX user_privacy IF NOT EXISTS FOR (u:User) ON (u.privacy);
 /*  ENTITÉS                                     */
 /* ============================================ */
 
-/* User(id, username, name, privacy, createdAt) */
+/* User(id, username, email, passwordHash, name, privacy, createdAt) */
 WITH {id:'u_001', username:'lea', email:'lea.martin@example.com', passwordHash:'$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYzNW8J4O5e', name:'Léa Martin', privacy:'public', createdAt: '2024-01-15T10:30:00'} AS user
 MERGE (u:User {id: user.id})
 SET u.username = user.username,
