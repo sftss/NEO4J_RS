@@ -1,4 +1,4 @@
-import random, json, math
+import random, json, math, bcrypt
 from collections import defaultdict
 from faker import Faker
 from datetime import datetime, timedelta
@@ -28,25 +28,25 @@ COMMUNITIES = [
 ]
 N_COMM = len(COMMUNITIES)
 
-# NEW: répartitions inégales des communautés (tech et sport plus grosses)
+# répartitions communautés
 COMMUNITY_WEIGHTS = [0.35, 0.25, 0.20, 0.12, 0.08]
 
-# compte : 55% privés, 45% publique
+# compte privé/public
 PRIVACY_OPTIONS = ["private", "public"]
 PRIVACY_WEIGHTS = [0.55, 0.45]
 
-# visibilité posts : 60% public, 30% followers_only, 10% private
+# visibilité posts
 POST_VISIBILITY_OPTIONS = ["public", "followers_only", "private"]
 POST_VISIBILITY_WEIGHTS = [0.6, 0.3, 0.1]
 
-# Raisons pour reports
+# reports
 REPORT_REASONS = ["spam", "hate_speech", "harassment", "fake_news", "inappropriate_content"]
 REPORT_STATUS = ["open", "in_review", "resolved", "dismissed"]
 
-# NEW: paramètres "pics"
+# "pics"
 INFLUENCER_RATIO = 0.06     # 6% d'influenceurs
-POST_SPIKE_RATIO = 0.08     # 8% de "blogueurs" 
-LIKE_MAGNET_RATIO = 0.06    # 6% reçoivent beaucoup de likes
+POST_SPIKE_RATIO = 0.08     # 8% bcp posts
+LIKE_MAGNET_RATIO = 0.06    # 6% beaucoup de likes
 POST_SPIKE_FACTOR = 2.0     # multiplicateur posts
 LIKE_TARGET_FACTOR = 3.0    # multiplicateur probabilité d'être liké
 INFLUENCER_FOLLOW_BOOST = (1, 3)  # chaque user suit 1 à 3 influenceurs
@@ -81,14 +81,34 @@ def dump_ndjson(path, rows):
 print("Génération users")
 users = []
 cid_by_user = {}
+used_emails = set()  
+
+def hash_password(password: str) -> str:
+    """Hash un mot de passe (bcrypt, rounds=4 pour rapidité)"""
+    salt = bcrypt.gensalt(rounds=4)
+    return bcrypt.hashpw(password.encode(), salt).decode()
 
 for i in range(N_USERS):
     # liaison pondérée aux communautés
     c = random.choices(COMMUNITIES, weights=COMMUNITY_WEIGHTS, k=1)[0]
     user_id = f"u_{i:05d}"
+    username = fake.user_name()
+    
+    # contrer les doublons d'email
+    email = f"{username}@example.com"
+    counter = 1
+    
+    while email in used_emails:
+        email = f"{username}{counter}@example.com"
+        counter += 1
+    
+    used_emails.add(email)  
+
     users.append({
         "id": user_id,
-        "username": fake.user_name(),
+        "username": username,
+        "email": email,
+        "passwordHash": hash_password("password123"), 
         "name": fake.name(),
         "privacy": random.choices(PRIVACY_OPTIONS, PRIVACY_WEIGHTS)[0],
         "createdAt": ndt(DAYS),
@@ -96,7 +116,7 @@ for i in range(N_USERS):
     })
     cid_by_user[user_id] = c["id"]
 
-# mappages pour les "pics"
+# mappages pour "pics"
 id2idx = {u["id"]: i for i, u in enumerate(users)}
 influencers = set(random.sample(range(N_USERS), max(1, int(N_USERS * INFLUENCER_RATIO))))
 post_spikers = set(random.sample(range(N_USERS), max(1, int(N_USERS * POST_SPIKE_RATIO))))

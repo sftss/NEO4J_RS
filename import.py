@@ -27,6 +27,7 @@ class Neo4jImporter:
         """Crée contraintes et index"""
         constraints = [
             "CREATE CONSTRAINT user_id IF NOT EXISTS FOR (u:User) REQUIRE u.id IS UNIQUE",
+            "CREATE CONSTRAINT email IF NOT EXISTS FOR (u:User) REQUIRE u.email IS UNIQUE",
             "CREATE CONSTRAINT post_id IF NOT EXISTS FOR (p:Post) REQUIRE p.id IS UNIQUE",
             "CREATE CONSTRAINT comment_id IF NOT EXISTS FOR (c:Comment) REQUIRE c.id IS UNIQUE",
             "CREATE CONSTRAINT tag_name IF NOT EXISTS FOR (t:Tag) REQUIRE t.name IS UNIQUE",
@@ -35,6 +36,7 @@ class Neo4jImporter:
         ]
         indexes = [
             "CREATE INDEX user_username IF NOT EXISTS FOR (u:User) ON (u.username)",
+            "CREATE INDEX user_email IF NOT EXISTS FOR (u:User) ON (u.email)",
             "CREATE INDEX user_privacy IF NOT EXISTS FOR (u:User) ON (u.privacy)",
             "CREATE INDEX post_visibility IF NOT EXISTS FOR (p:Post) ON (p.visibility)",
             "CREATE INDEX tag_name_index IF NOT EXISTS FOR (t:Tag) ON (t.name)",
@@ -62,12 +64,14 @@ class Neo4jImporter:
     def import_users(self):
         """Import des utilisateurs"""
         users = self.load_ndjson("users.ndjson")
-        users = [u for u in users if u.get('id')]  # Filtrer les ID null
+        users = [u for u in users if u.get('id')]  # filtre ID null (si perte => pb)
         
         query = """
         UNWIND $users AS user
         MERGE (u:User {id: user.id})
         SET u.username = user.username,
+            u.email = user.email,
+            u.passwordHash = user.passwordHash,
             u.name = user.name,
             u.privacy = user.privacy,
             u.createdAt = datetime(user.createdAt)

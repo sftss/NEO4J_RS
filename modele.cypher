@@ -4,6 +4,7 @@
 
 // Contraintes clés primaires
 CREATE CONSTRAINT user_id IF NOT EXISTS FOR (u:User) REQUIRE u.id IS UNIQUE;
+CREATE CONSTRAINT user_email IF NOT EXISTS FOR (u:User) REQUIRE u.email IS UNIQUE;
 CREATE CONSTRAINT post_id IF NOT EXISTS FOR (p:Post) REQUIRE p.id IS UNIQUE;
 CREATE CONSTRAINT comment_id IF NOT EXISTS FOR (c:Comment) REQUIRE c.id IS UNIQUE;
 CREATE CONSTRAINT tag_name IF NOT EXISTS FOR (t:Tag) REQUIRE t.name IS UNIQUE;
@@ -13,6 +14,7 @@ CREATE CONSTRAINT group_id IF NOT EXISTS FOR (g:Group) REQUIRE g.id IS UNIQUE;
 
 // Index
 CREATE INDEX user_username IF NOT EXISTS FOR (u:User) ON (u.username);
+CREATE INDEX user_email IF NOT EXISTS FOR (u:User) ON (u.email);
 CREATE INDEX post_visibility IF NOT EXISTS FOR (p:Post) ON (p.visibility);
 CREATE INDEX group_visibility IF NOT EXISTS FOR (g:Group) ON (g.visibility);
 CREATE INDEX user_privacy IF NOT EXISTS FOR (u:User) ON (u.privacy);
@@ -22,11 +24,13 @@ CREATE INDEX user_privacy IF NOT EXISTS FOR (u:User) ON (u.privacy);
 /* ============================================ */
 
 /* User(id, username, name, privacy, createdAt) */
-WITH {id:'u_001', username:'lea', name:'Léa Martin', privacy:'public',createdAt: '2024-01-15T10:30:00'} AS user
+WITH {id:'u_001', username:'lea', email:'lea.martin@example.com', passwordHash:'$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYzNW8J4O5e', name:'Léa Martin', privacy:'public', createdAt: '2024-01-15T10:30:00'} AS user
 MERGE (u:User {id: user.id})
 SET u.username = user.username,
-    u.name     = user.name,
-    u.privacy  = user.privacy,
+    u.email = user.email,
+    u.passwordHash = user.passwordHash,
+    u.name = user.name,
+    u.privacy = user.privacy,
     u.createdAt = datetime(user.createdAt);
 
 /* Post(id, authorId, content, visibility, mediaUrl, likeCount, commentCount, createdAt) */
